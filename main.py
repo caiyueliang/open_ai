@@ -17,11 +17,11 @@ def cart_pole_1():
     observation = env.reset()
     for t in range(1000):
         env.render()
-        print('[observation]', observation)
+        print('[observation] old:', observation)
         action = env.action_space.sample()
         print('[observation] action', action)
         observation, reward, done, info = env.step(action)
-        print('[observation]:', observation, reward, done, info)
+        print('[observation] new:', observation, 'reward, done, info', reward, done, info)
         # if done:
         #     print("Episode finished after {} timesteps".format(t + 1))
         #     break
