@@ -92,6 +92,7 @@ print('\nCollecting experience...')
 for i_episode in range(4000):
     observation = env.reset()
     total_reward = 0
+    total_step = 0
 
     while True:
         env.render()
@@ -112,7 +113,9 @@ for i_episode in range(4000):
             dqn.learn()
 
         if done:
-            print('i_episode:', i_episode, 'reward:', round(total_reward, 2))
+            print('i_episode:', i_episode, 'reward:', round(total_reward, 2), 'step:', total_step)
             break
+
         observation = observation_next
+        total_step += 1
 
