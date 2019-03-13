@@ -1,27 +1,22 @@
 # encoding: utf-8
-import gym
-from gym import envs
-from gym.wrappers import Monitor
-
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 
 
-class DQN(object):  # 首先创建一个模型类
+class DQN(object):
     def __init__(self,
                  n_actions, n_features,
-                 learning_rate=0.01,  # 学习效率
-                 reward_decay=0.9,  # 奖励衰减
+                 learning_rate=0.01,            # 学习效率
+                 reward_decay=0.9,              # 奖励衰减
                  e_greedy=0.9,
-                 replace_target_iter=300,  # 跟新预测神经网络的周期
-                 memory_size=500,  # 记忆库的大小
-                 batch_size=32,  # 神经网络的batch大小
-                 e_greedy_increment=0,  # 选择行为时的概率增加因子
-                 output_graph=False,  # 是否输出Tensorboard
-                 q_double=True,  # 是否使Double DQN
-                 layer1_elmts=20,  # 神经元个数
-                 use_e_greedy_increment=1000  # 这里为阈值， 1000次后减少行为随机概率
+                 replace_target_iter=300,       # 跟新预测神经网络的周期
+                 memory_size=500,               # 记忆库的大小
+                 batch_size=32,                 # 神经网络的batch大小
+                 e_greedy_increment=0,          # 选择行为时的概率增加因子
+                 output_graph=False,            # 是否输出Tensorboard
+                 q_double=True,                 # 是否使Double DQN
+                 layer1_elmts=20,               # 神经元个数
+                 use_e_greedy_increment=1000    # 这里为阈值， 1000次后减少行为随机概率
                  ):
         self.n_actions = n_actions
         self.n_features = n_features
@@ -52,8 +47,8 @@ class DQN(object):  # 首先创建一个模型类
         self.sess.run(tf.global_variables_initializer())
         self.cost_his = []  # 这里建立cost数组，图像现实cost
 
+    # build evaluate_net
     def build_net(self):
-        # ********************* build evaluate_net ********************
         self.state = tf.placeholder(tf.float32, [None, self.n_features], name='state')
         self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='QTarget')
         w_initializer, b_initializer = tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)
@@ -70,13 +65,12 @@ class DQN(object):  # 首先创建一个模型类
         self.state_next = tf.placeholder(tf.float32, [None, self.n_features], name='state_next')
         # 建立预测神经网络
         with tf.variable_scope('target_net'):
-            t_layer1 = tf.layers.dense(self.state_next, self.layer1_elmts, tf.nn.relu, kernel_initializer=w_initializer, \
+            t_layer1 = tf.layers.dense(self.state_next, self.layer1_elmts, tf.nn.relu, kernel_initializer=w_initializer,
                                        bias_initializer=b_initializer, name='t_layer1')
-            self.q_next = tf.layers.dense(t_layer1, self.n_actions, kernel_initializer=w_initializer, \
+            self.q_next = tf.layers.dense(t_layer1, self.n_actions, kernel_initializer=w_initializer,
                                           bias_initializer=b_initializer, name='q_next')
 
-        # 这里存储到记忆库，采用循环存储的方式，新值替换旧值
-
+    # 这里存储到记忆库，采用循环存储的方式，新值替换旧值
     def store_transition(self, state, action, reward, state_next):
         if not hasattr(self, 'memory_counter'):
             self.memory_counter = 0
@@ -85,8 +79,7 @@ class DQN(object):  # 首先创建一个模型类
         self.memory[tmp_index, :] = transition
         self.memory_counter += 1
 
-        # 以一定几率选择行为，随训练的进行，逐渐减小随机的可能性，选择最大的值
-
+    # 以一定几率选择行为，随训练的进行，逐渐减小随机的可能性，选择最大的值
     def choose_action(self, observation):
         observation = observation[np.newaxis, :]
         if np.random.uniform() < self.epsilon:
@@ -121,8 +114,8 @@ class DQN(object):  # 首先创建一个模型类
         eval_act_index = batch_memory[:, self.n_features].astype(int)
         reward = batch_memory[:, self.n_features + 1]
 
-        # double DQN 实质上就是 未来状态放入 现实神经网络 获取最大值的index,在预测的行为中对应，就是不选择最大的，选择对应的，这样可以防止过估计。这样的操作有点Sarsa-lambda的味道。
-
+        # double DQN 实质上就是 未来状态放入 现实神经网络 获取最大值的index,在预测的行为中对应，
+        # 就是不选择最大的，选择对应的，这样可以防止过估计。这样的操作有点Sarsa-lambda的味道。
         if (self.q_double):
             max_act4next = np.argmax(q_eval4next, axis=1)
             # print('***********: ',q_eval4next.shape[0],'#####:',q_eval4next.shape[1])
