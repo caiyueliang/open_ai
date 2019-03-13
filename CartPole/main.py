@@ -71,7 +71,7 @@ def cart_pole_2():
 
     steps = 0
     # 训练300个回合，这里环境模型，结束回合的标志是 倾斜程度和 X 的移动限度，你可以很容易从训练效果中看出来，当然了，也可以去看gym的底层代码，还是比较清晰的。
-    for episode in range(300):
+    for episode in range(500):
 
         observation = env.reset()
         ep_r = 0
@@ -82,13 +82,13 @@ def cart_pole_2():
             observation_next, reward, done, info = env.step(action)             # 环境模型 采用行为，获得下个状态，和潜在的奖励
 
             x, x_dot, theta, theat_dot = observation_next                       # 这里拆分了 状态值 ，里面有四个参数
-            print('x', x, 'x_dot', x_dot, 'theta', theta, 'theat_dot', theat_dot, 'reward', reward, 'done', done)
+            # print('x', x, 'x_dot', x_dot, 'theta', theta, 'theat_dot', theat_dot, 'reward', reward, 'done', done)
             # 这里用了，x 和theta的限度值 来判断奖励的幅度，当然也可以gym自带的 ，但是这个效率据说比较高
             reward1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
             reward2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
             reward = reward1 + reward2
-            print('env.x_threshold', env.x_threshold, 'env.theta_threshold_radians', env.theta_threshold_radians) # 将奖励综合
-            print('reward1', reward1, 'reward2', reward2, 'reward', reward)
+            # print('env.x_threshold', env.x_threshold, 'env.theta_threshold_radians', env.theta_threshold_radians)
+            # print('reward1', reward1, 'reward2', reward2, 'reward', reward)
             RL.store_transition(observation, action, reward, observation_next)  # 先存储到记忆库
 
             ep_r += reward          # 这里只是为了观察奖励值是否依据实际情况变化，来方便判断模型的正确性

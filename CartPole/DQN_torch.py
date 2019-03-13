@@ -8,17 +8,18 @@ import gym
 
 # 超参数
 BATCH_SIZE = 32
-LR = 0.01  # learning rate
+LR = 0.01                   # learning rate
 # 强化学习的参数
-EPSILON = 0.9  # greedy policy
-GAMMA = 0.9  # reward discount
-TARGET_REPLACE_ITER = 100  # target update frequency
-MEMORY_CAPACITY = 2000
+EPSILON = 0.9               # greedy policy
+GAMMA = 0.9                 # reward discount
+TARGET_REPLACE_ITER = 100   # target update frequency
+MEMORY_CAPACITY = 1000
 # 导入实验环境
 env = gym.make('CartPole-v0')
 env = env.unwrapped
 N_ACTIONS = env.action_space.n
 N_STATES = env.observation_space.shape[0]
+print('N_ACTIONS', N_ACTIONS, 'N_STATES', N_STATES)
 
 
 class Net(nn.Module):
@@ -40,8 +41,8 @@ class DQN(object):
     def __init__(self):
         self.eval_net, self.target_net = Net(), Net()
         # 记录学习到多少步
-        self.learn_step_counter = 0  # for target update
-        self.memory_counter = 0  # for storing memory
+        self.learn_step_counter = 0     # for target update
+        self.memory_counter = 0         # for storing memory
         # 初始化memory
         self.memory = np.zeros((MEMORY_CAPACITY, N_STATES * 2 + 2))
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=LR)
@@ -59,8 +60,8 @@ class DQN(object):
         return action
 
     # s:当前状态， a:动作, r:reward奖励, s_:下一步状态
-    def store_transaction(self, s, a, r, s_):
-        transaction = np.hstack((s, [a, r], s_))
+    def store_transaction(self, state, action, reward, state_next):
+        transaction = np.hstack((state, [action, reward], state_next))
         # replace the old memory with new memory
         index = self.memory_counter % MEMORY_CAPACITY
         self.memory[index, :] = transaction
@@ -70,21 +71,33 @@ class DQN(object):
         # target net update
         if self.learn_step_counter % TARGET_REPLACE_ITER == 0:
             self.target_net.load_state_dict(self.eval_net.state_dict())
+        # print('[learn] ============================================================')
+        for i in range(10):
+            sample_index = np.random.choice(MEMORY_CAPACITY, BATCH_SIZE)
+            b_memory = self.memory[sample_index, :]
+            b_state = Variable(torch.FloatTensor(b_memory[:, :N_STATES]))
+            b_action = Variable(torch.LongTensor(b_memory[:, N_STATES: N_STATES + 1].astype(int)))
+            b_reward = Variable(torch.FloatTensor(b_memory[:, N_STATES + 1: N_STATES + 2]))
+            b_state_next = Variable(torch.FloatTensor(b_memory[:, -N_STATES:]))
+            # print('b_state', b_state.size())
+            # print('b_action', b_action.size())
+            # print('b_reward', b_reward.size())
+            # print('b_state_next', b_state_next.size())
 
-        sample_index = np.random.choice(MEMORY_CAPACITY, BATCH_SIZE)
-        b_memory = self.memory[sample_index, :]
-        b_s = Variable(torch.FloatTensor(b_memory[:, :N_STATES]))
-        b_a = Variable(torch.LongTensor(b_memory[:, N_STATES: N_STATES + 1].astype(int)))
-        b_r = Variable(torch.FloatTensor(b_memory[:, N_STATES + 1: N_STATES + 2]))
-        b_s_ = Variable(torch.FloatTensor(b_memory[:, -N_STATES:]))
+            q_eval = self.eval_net(b_state_next).gather(1, b_action)
+            # print('q_eval', q_eval.size())
+            q_next = self.target_net(b_state_next).detach()
+            # print('q_next', q_next.size())
 
-        q_eval = self.eval_net(b_s).gather(1, b_a)
-        q_next = self.target_net(b_s_).detach()
-        q_target = b_r + GAMMA * q_next.max(1)[0]
-        loss = self.loss_func(q_eval, q_target)
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
+            # print('q_next.max(1)[0]', q_next.max(1)[0].view(-1, 1).size())
+            q_target = b_reward + GAMMA * q_next.max(1)[0].view(-1, 1)
+            # print('q_target', q_target.size())
+
+            loss = self.loss_func(q_eval, q_target)
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
 
     # def save(self):
     #
