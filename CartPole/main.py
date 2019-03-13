@@ -87,7 +87,7 @@ def cart_pole_2():
             reward1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
             reward2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
             reward = reward1 + reward2
-            print('env.x_threshold', env.x_threshold, 'env.theta_threshold_radians', env.theta_threshold_radians)# 将奖励综合
+            print('env.x_threshold', env.x_threshold, 'env.theta_threshold_radians', env.theta_threshold_radians) # 将奖励综合
             print('reward1', reward1, 'reward2', reward2, 'reward', reward)
             RL.store_transition(observation, action, reward, observation_next)  # 先存储到记忆库
 
