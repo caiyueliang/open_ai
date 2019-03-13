@@ -8,9 +8,9 @@ import gym
 
 # 超参数
 BATCH_SIZE = 32
-LR = 0.01                   # learning rate
+LR = 0.001                   # learning rate
 # 强化学习的参数
-EPSILON = 0.9               # greedy policy
+EPSILON = 1               # greedy policy
 GAMMA = 0.9                 # reward discount
 TARGET_REPLACE_ITER = 100   # target update frequency
 MEMORY_CAPACITY = 1000
@@ -27,11 +27,15 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.fc1 = nn.Linear(N_STATES, 10)
         self.fc1.weight.data.normal_(0, 0.1)  # 初始化
+        self.fc2 = nn.Linear(10, 10)
+        self.fc2.weight.data.normal_(0, 0.1)  # 初始化
         self.out = nn.Linear(10, N_ACTIONS)
         self.out.weight.data.normal_(0, 0.1)  # 初始化
 
     def forward(self, x):
         x = self.fc1(x)
+        x = F.relu(x)
+        x =self.fc2(x)
         x = F.relu(x)
         actions_value = self.out(x)
         return actions_value
@@ -47,6 +51,7 @@ class DQN(object):
         self.memory = np.zeros((MEMORY_CAPACITY, N_STATES * 2 + 2))
         self.optimizer = torch.optim.Adam(self.eval_net.parameters(), lr=LR)
         self.loss_func = nn.MSELoss()
+        self.loss_func = nn.L1Loss()
 
     def choose_action(self, x):
         x = Variable(torch.unsqueeze(torch.FloatTensor(x), 0))
