@@ -86,6 +86,10 @@ class DQN(object):
         loss.backward()
         self.optimizer.step()
 
+    # def save(self):
+    #
+    # def load(self):
+
 
 dqn = DQN()
 print('\nCollecting experience...')
